@@ -3,245 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1987 Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>Maze Craze</title>
     <style>
-        @keyframes titleColorCycle {
-            0% { color: black; }
-            14% { color: pink; }
-            28% { color: magenta; }
-            42% { color: purple; }
-            56% { color: blue; }
-            70% { color: cyan; }
-            84% { color: white; }
-            98% { color: gray; }
-            100% { color: black; }
-        }
-
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #282c34;
-            color: #fff;
+            background-color: #121212;
+            color: white;
             margin: 0;
             padding: 0;
         }
-
-        h1 {
-            font-size: 2.5em;
-            animation: titleColorCycle 5s infinite;
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
-
-        p {
-            font-size: 1.2em;
+        canvas {
+            border: 1px solid #333;
+            margin-top: 20px;
         }
-
+        #controls {
+            display: grid;
+            grid-template-columns: repeat(3, 180px);
+            grid-template-rows: repeat(3, 180px);
+            gap: 30px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .control-button {
+            background-color: #333;
+            border: none;
+            color: white;
+            font-size: 60px;
+            width: 180px;
+            height: 180px;
+            cursor: pointer;
+        }
+        .control-button:hover {
+            background-color: #444;
+        }
         #footer {
             margin-top: 20px;
-            font-size: 0.9em;
-            color: #bbb;
-        }
-
-        #game-board {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            max-width: 600px;
-            margin: 20px auto;
-        }
-
-        .tile {
-            width: 60px;
-            height: 60px;
-            margin: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #61dafb;
-            color: #282c34;
-            font-size: 24px;
-            cursor: pointer;
-            border: 2px solid #282c34;
-            border-radius: 5px;
-            transition: transform 0.2s;
-        }
-
-        .tile:hover {
-            transform: scale(1.1);
-        }
-
-        #operations, #add-number, #cancel-button {
-            margin-top: 20px;
-        }
-
-        button {
-            margin: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            background-color: #61dafb;
-            color: #282c34;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #21a1f1;
-        }
-
-        button.disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-
-        #message {
-            margin-top: 20px;
             font-size: 18px;
-            color: #28a745;
+            color: #ccc;
+            font-family: 'Courier New', Courier, monospace;
         }
-
-        #move-counter {
-            font-size: 1.1em;
-            color: #f39c12;
+        #title {
+            font-size: 108px;
+            color: #ffcc00;
+            font-family: 'Courier New', Courier, monospace;
+            margin-top: 20px;
         }
-
-        #cancel-button {
-            display: none;
+        #startButton {
+            background-color: #444;
+            color: white;
+            font-size: 60px;
+            padding: 30px 60px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background-color: #555;
+        }
+        #expIndicator {
+            margin-top: 30px;
+            font-size: 48px;
+        }
+        #expAmount {
+            color: yellow;
         }
     </style>
 </head>
 <body>
-    <h1>1987 Game</h1>
-    <p>Combine tiles to get 1987 on a single tile!</p>
-    <div id="game-board"></div>
-    <div id="operations" style="display: none;">
-        <button onclick="performOperation('+')">Add (+)</button>
-        <button onclick="performOperation('-')">Subtract (-)</button>
-        <button onclick="performOperation('*')">Multiply (*)</button>
+    <div id="gameContainer">
+        <div id="title">Maze Craze</div>
+        <button id="startButton">Start Game</button>
+        <div id="expIndicator">
+            Exp: <span id="expAmount">0</span>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="controls">
+            <button class="control-button"></button>
+            <button class="control-button" id="upButton">↑</button>
+            <button class="control-button"></button>
+            <button class="control-button" id="leftButton">←</button>
+            <button class="control-button"></button>
+            <button class="control-button" id="rightButton">→</button>
+            <button class="control-button"></button>
+            <button class="control-button" id="downButton">↓</button>
+            <button class="control-button"></button>
+        </div>
+        <div id="footer">
+            "Made by a lazy student who never sleeps" <br>
+            —andy64
+        </div>
     </div>
-    <div id="add-number">
-        <button onclick="addNumber()">Add Number</button>
-    </div>
-    <div id="cancel-button">
-        <button onclick="cancelSelection()">Cancel</button>
-    </div>
-    <p id="message"></p>
-    <p id="move-counter">Moves: 0</p>
-    <div id="footer">Made by a lazy student that hardly ever sleeps...zzz...<br>—creator Andy64</div>
 
     <script>
-        const board = document.getElementById('game-board');
-        const message = document.getElementById('message');
-        const operations = document.getElementById('operations');
-        const addNumberBtn = document.getElementById('add-number');
-        const cancelButton = document.getElementById('cancel-button');
-        const moveCounterDisplay = document.getElementById('move-counter');
-        const currentYear = new Date().getFullYear();
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-        let tiles = [currentYear];
-        let selectedTiles = [];
-        let operation = '';
-        let moveCount = 0;
+        const TILE_SIZE = 15; // Tripled
+        const WIDTH = 60;
+        const HEIGHT = 60;
 
-        function renderBoard() {
-            board.innerHTML = '';
-            tiles.forEach((value, index) => {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.textContent = value;
-                tile.onclick = () => selectTile(index);
-                if (selectedTiles.includes(index)) {
-                    tile.style.backgroundColor = '#87ceeb';
+        canvas.width = WIDTH * TILE_SIZE;
+        canvas.height = HEIGHT * TILE_SIZE;
+
+        let playerX = Math.floor(WIDTH / 2), playerY = Math.floor(HEIGHT / 2);
+        let experience = 0;
+        let walls = [];
+        let expTiles = [];
+        const margin = 5;
+
+        document.getElementById("controls").style.display = "none";
+        document.getElementById("expIndicator").style.display = "none";
+
+        document.getElementById("startButton").addEventListener("click", startGame);
+        document.addEventListener("keydown", movePlayer);
+        document.getElementById("upButton").addEventListener("click", () => movePlayer({ key: "ArrowUp" }));
+        document.getElementById("downButton").addEventListener("click", () => movePlayer({ key: "ArrowDown" }));
+        document.getElementById("leftButton").addEventListener("click", () => movePlayer({ key: "ArrowLeft" }));
+        document.getElementById("rightButton").addEventListener("click", () => movePlayer({ key: "ArrowRight" }));
+
+        function startGame() {
+            document.getElementById("startButton").style.display = "none";
+            document.getElementById("controls").style.display = "grid";
+            document.getElementById("expIndicator").style.display = "block";
+
+            generateMaze();
+            draw();
+        }
+
+        function generateMaze() {
+            walls = [];
+            expTiles = [];
+            for (let x = 1; x < WIDTH - 1; x++) {
+                for (let y = 1; y < HEIGHT - 1; y++) {
+                    if ((Math.abs(x - playerX) <= margin && Math.abs(y - playerY) <= margin)) {
+                        continue;
+                    }
+                    if (Math.random() < 0.2) {
+                        walls.push({ x, y });
+                    }
                 }
-                board.appendChild(tile);
+            }
+
+            for (let x = 3; x < WIDTH - 3; x += randomDistance()) {
+                for (let y = 3; y < HEIGHT - 3; y += randomDistance()) {
+                    if (!isWall(x, y) && (Math.abs(x - playerX) > margin || Math.abs(y - playerY) > margin)) {
+                        expTiles.push({ x, y });
+                    }
+                }
+            }
+
+            regeneratePoints();
+        }
+
+        function randomDistance() {
+            return Math.floor(Math.random() * (6 - 1 + 1)) + 1;
+        }
+
+        function isWall(x, y) {
+            return walls.some(wall => wall.x === x && wall.y === y);
+        }
+
+        function regeneratePoints() {
+            setInterval(() => {
+                if (expTiles.length < 900) {
+                    const x = Math.floor(Math.random() * (WIDTH - 2)) + 1;
+                    const y = Math.floor(Math.random() * (HEIGHT - 2)) + 1;
+
+                    if (!isWall(x, y) && !expTiles.some(point => point.x === x && point.y === y)) {
+                        expTiles.push({ x, y });
+                    }
+                }
+            }, 5000);
+        }
+
+        function movePlayer(event) {
+            let newX = playerX;
+            let newY = playerY;
+
+            if (event.key === "ArrowUp") newY--;
+            if (event.key === "ArrowDown") newY++;
+            if (event.key === "ArrowLeft") newX--;
+            if (event.key === "ArrowRight") newX++;
+
+            if (newX < 0) newX = WIDTH - 1;
+            if (newX >= WIDTH) newX = 0;
+            if (newY < 0) newY = HEIGHT - 1;
+            if (newY >= HEIGHT) newY = 0;
+
+            if (!isWall(newX, newY)) {
+                playerX = newX;
+                playerY = newY;
+            }
+
+            expTiles.forEach((expTile, index) => {
+                if (playerX === expTile.x && playerY === expTile.y) {
+                    experience++;
+                    expTiles.splice(index, 1);
+                }
+            });
+
+            updateExpIndicator();
+            draw();
+        }
+
+        function updateExpIndicator() {
+            document.getElementById('expAmount').textContent = experience;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "white";
+            walls.forEach(wall => {
+                ctx.fillRect(wall.x * TILE_SIZE, wall.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            });
+
+            const gradient = ctx.createLinearGradient(
+                playerX * TILE_SIZE, playerY * TILE_SIZE,
+                playerX * TILE_SIZE + TILE_SIZE, playerY * TILE_SIZE + TILE_SIZE
+            );
+            gradient.addColorStop(0, "#00FFFF");
+            gradient.addColorStop(1, "#FF00FF");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(playerX * TILE_SIZE, playerY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+            ctx.fillStyle = "yellow";
+            expTiles.forEach(expTile => {
+                ctx.beginPath();
+                ctx.arc(expTile.x * TILE_SIZE + TILE_SIZE / 2, expTile.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 2, 0, Math.PI * 2);
+                ctx.fill();
             });
         }
-
-        function addNumber() {
-            tiles.push(1);
-            renderBoard();
-        }
-
-        function selectTile(index) {
-            if (selectedTiles.length >= 2) {
-                alert("You cannot select more than two numbers!");
-                return;
-            }
-
-            if (!selectedTiles.includes(index)) {
-                selectedTiles.push(index);
-                cancelButton.style.display = 'inline-block';
-
-                if (selectedTiles.length === 2) {
-                    operations.style.display = 'block';
-                }
-            }
-
-            renderBoard();
-        }
-
-        function cancelSelection() {
-            selectedTiles = [];
-            cancelButton.style.display = 'none';
-            operations.style.display = 'none';
-            renderBoard();
-            moveCount++;
-            updateMoveCounter();
-        }
-
-        function performOperation(op) {
-            if (selectedTiles.length === 2) {
-                const [index1, index2] = selectedTiles;
-                const val1 = tiles[index1];
-                const val2 = tiles[index2];
-                let result;
-
-                switch (op) {
-                    case '+':
-                        result = val1 + val2;
-                        break;
-                    case '-':
-                        result = Math.max(val1, val2) - Math.min(val1, val2);
-                        break;
-                    case '*':
-                        result = val1 * val2;
-                        break;
-                    default:
-                        return;
-                }
-
-                tiles[index1] = result;
-                tiles.splice(index2, 1);
-                selectedTiles = [];
-                operation = '';
-                operations.style.display = 'none';
-
-                moveCount++;
-                updateMoveCounter();
-                checkWin();
-                renderBoard();
-            }
-        }
-
-        function checkWin() {
-            if (tiles.length === 1 && tiles[0] === 1987) {
-                message.textContent = 'Congratulations! You reached 1987!';
-                board.innerHTML = '';
-                operations.style.display = 'none';
-                addNumberBtn.style.display = 'none';
-            } else if (tiles.includes(1987) && tiles.length > 1) {
-                message.textContent = "You can't win until there's only one tile left!";
-            } else {
-                message.textContent = '';
-            }
-        }
-
-        function updateMoveCounter() {
-            moveCounterDisplay.textContent = `Moves: ${moveCount}`;
-        }
-
-        renderBoard();
     </script>
 </body>
 </html>
